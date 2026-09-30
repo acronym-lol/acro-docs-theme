@@ -41,42 +41,33 @@ Then look at the old file for anything **beyond** the shared defaults:
 
 Keep `docs/.nojekyll`. Do not touch `docs/_meta.yml`.
 
-## 2. Move hand-made sidebar entries
+## 2. Leave the existing sidebar alone
 
-Read the old `docs/_sidebar.md` before it is replaced.
+**Do not rewrite or reorder `docs/_sidebar.md`.** The generator reads it as the author's
+order and rebuilds from it:
 
-- **Links to pages in `docs/`** need nothing. The generator lists every page.
-- **Links anywhere else** (another repo, a GitHub folder, an external site) go into a new
-  `docs/_sidebar.extra.md`, as a markdown list. Group them under a bold label if the old
-  sidebar did:
+- **Order** is kept as written. Pages it does not list are added after the ones it does,
+  and links to pages that no longer exist are dropped.
+- **Titles** are taken from the pages themselves (their first `# Heading`, or `title`),
+  the same as on acro-docs, so a label that differs from its page's heading will change.
+  That is expected; mention it in the PR if a title looks wrong.
+- **Top-level lines that are not page links** are kept as written, in place: flat section
+  labels like `- **Reference**`, and links to other sites.
+- **A bold heading with pages nested under it** that all live in one folder with no
+  README of its own becomes that folder's name (e.g. `**Client Apps**` over
+  `client-apps/`).
 
-  ```md
-  - **Modules**
-    - [Macros](https://acronym-lol.github.io/acro-td-macros/)
-  ```
+Two things to check in the old sidebar:
 
-  If the target has its own Pages site, link to that rather than to a GitHub folder.
-  These sites are public, and GitHub links to private repos 404 for anyone outside the
-  organisation.
+- **Links to GitHub folders** (`https://github.com/acronym-lol/<repo>/tree/...`): these
+  sites are public, and those links 404 for anyone outside the organisation. If the target
+  has its own Pages site, change the link to that. Otherwise leave it.
+- **Nested links to other sites** (indented under a heading): only top-level non-page
+  lines are kept. Move any nested external links to the top level, or into
+  `docs/_sidebar.extra.md`, which is appended after a divider.
 
-- **Order.** The generated sidebar orders pages by `sidebar_position` in each page's
-  front matter, then by filename. If the old sidebar used an order that matters (for
-  example Getting Started first), carry it over by adding front matter to those pages:
-
-  ```md
-  ---
-  sidebar_position: 1
-  ---
-  ```
-
-  This is the one content change allowed, and it fixes the order on acro-docs too, which
-  reads the same field. Use 1, 2, 3... for the pages that need an order and leave the rest
-  unpositioned.
-
-- **Bold pseudo-headings** in the old sidebar (`- **Reference**` with pages under it, but
-  no folder) cannot be generated. A real group is a folder. **Do not move files into
-  folders** in a migration, because it changes every URL. Note in the PR which groupings
-  were dropped, so the owner can decide whether they want folders.
+Do not add `sidebar_position` to pages just to keep the old order. The sidebar already
+carries it, and acro-docs reads the same file.
 
 ## 3. Add the sidebar workflow
 
@@ -97,8 +88,9 @@ From the repo root:
 npx -p github:acronym-lol/acro-docs-theme#v1 acro-docs-sidebar docs
 ```
 
-It replaces `docs/_sidebar.md` and warns that it is replacing a hand-written one. That is
-expected. Commit the new file: the workflow keeps it current from now on.
+It rebuilds `docs/_sidebar.md` in place, keeping its order and section labels. Check the
+diff: it should be the same pages in the same order, with titles taken from the pages and
+a generated note at the top. Commit it: the workflow keeps it current from now on.
 
 ## 5. Callouts
 
@@ -143,9 +135,7 @@ Moves the GitHub Pages docs site onto the shared acro-docs-theme
 sidebar, and the workflow that keeps it current.
 
 - index.html: now the shell. Kept from the old file: <anything kept, or "nothing">.
-- _sidebar.md: generated from docs/. Links outside docs/ moved to _sidebar.extra.md.
-- Order: added sidebar_position to <pages>, to keep <the order that mattered>.
-- Dropped groupings: <pseudo-headings with no folder, or "none">.
+- Sidebar: rebuilt in place, order kept. Titles that changed: <list, or "none">.
 - Callouts converted: <count, or "none">.
 
 Verified locally: <the checklist above>.

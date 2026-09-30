@@ -37,16 +37,24 @@ docs/
 `sidebar/generate.mjs` turns `docs/` into `_sidebar.md` with the acro-docs rules
 (`scripts/lib/nav.ts` there, plus its ingestion rules):
 
-| Rule    | Behaviour                                                                                                                                                               |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pages   | `.md` files. Anything starting with `_` or `.` is skipped (files and folders).                                                                                          |
-| Titles  | `sidebar_label`, then `title`, then the first `# ` heading, then the filename humanised.                                                                                |
-| Order   | `sidebar_position` ascending (decimals allowed), then filename. Unpositioned pages come after positioned ones.                                                          |
-| Folders | A folder's `README.md` or `index.md` is the folder's own page. Label: `_category_.json`, then that page's title, then the folder name as written. Empty folders vanish. |
-| Home    | The root `README.md` is the home page, reached from the site name at the top of the rail, so it is not listed again.                                                    |
+| Rule    | Behaviour                                                                                                                                                                                                                                                           |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pages   | `.md` files. Anything starting with `_` or `.` is skipped (files and folders).                                                                                                                                                                                      |
+| Titles  | `sidebar_label`, then `title`, then the first `# ` heading, then the filename humanised.                                                                                                                                                                            |
+| Order   | `sidebar_position` if a page sets one; otherwise the page's place in the existing `_sidebar.md` (the author's order); otherwise filename, after the listed pages.                                                                                                   |
+| Folders | A folder's `README.md` or `index.md` is the folder's own page. Label: `_category_.json`, then (for a folder with no page of its own) a bold heading over its pages in `_sidebar.md`, then that page's title, then the folder name as written. Empty folders vanish. |
+| Home    | The root `README.md` is the home page, reached from the site name at the top of the rail, so it is not listed again.                                                                                                                                                |
 
-`_sidebar.extra.md`, if present, is appended after a divider, verbatim. Use it for links
-the folder cannot express, such as other repos' documentation.
+**The existing `_sidebar.md` is the order.** Every run rebuilds it from itself: the order
+of its lines is kept, pages it does not list are added after the listed ones, links to
+pages that have gone are dropped, and titles are taken from the pages. Top-level lines that
+are not page links (a flat `- **Reference**` label, a link to another site) stay where the
+author put them. So to reorder a site, move lines in `_sidebar.md`; the next run keeps it.
+Rebuilding its own output changes nothing, and acro-docs reads the same file for the same
+order (`scripts/lib/sidebar-order.ts` there mirrors `sidebar/order.mjs` here).
+
+`_sidebar.extra.md`, if present, is appended after a divider, verbatim, for links that
+belong below everything else.
 
 Run it by hand with:
 
