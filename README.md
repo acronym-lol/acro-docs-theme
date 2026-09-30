@@ -123,23 +123,34 @@ highlighted as the reader scrolls.
 
 ## Versions and releases
 
-Sites load `@1`, jsDelivr's "latest 1.x". So:
+Sites load `@1`, which jsDelivr resolves to the highest `v1.x.y` **tag**. So:
 
-- **A 1.x release** reaches every site automatically, but not instantly: jsDelivr caches
-  what `@1` resolves to, so a release can take hours to appear everywhere. To make it live
-  now, purge it:
+- **A 1.x release** reaches every site automatically, but not instantly. jsDelivr's CDN
+  re-checks what `@1` means every 12 hours; purge to make it immediate:
   `https://purge.jsdelivr.net/gh/acronym-lol/acro-docs-theme@1/theme/acro-docsify.css`
-  (and the same for `acro-docsify.js`, `tokens.css`, `fonts.css`).
+  (and the same for `acro-docsify.js`, `tokens.css`, `fonts.css`). Readers' **browsers**
+  may keep the previous copy for up to 7 days (jsDelivr's `max-age` for version ranges),
+  and no purge reaches those, so a small change can take a week to reach everyone.
 - **A breaking change** (renamed classes a repo might target, a different shell, a new
   required file) is `2.0.0`. Sites stay on `@1` until each migrates.
 
+> [!WARNING]
+> **`v1` is a branch, never a tag.** jsDelivr treats a tag named `v1` as the exact,
+> permanent version "1": it caches that tag's files forever (`immutable`), ignores later
+> moves of the tag, and cannot be purged. `@1` then never picks up a release. This
+> happened with 1.1.0 and 1.2.0 until the tag was replaced by a branch. The reusable
+> workflow's `@v1` works the same with a branch.
+
 To release:
 
-1. Bump `version` in `package.json` and commit.
-2. Tag it: `git tag v1.2.0 && git push origin v1.2.0`. jsDelivr's `@1` follows semver tags.
-3. Move the floating major tag, which the reusable workflow is called at:
-   `git tag -f v1 && git push -f origin v1`.
-4. Purge jsDelivr (above) if it needs to be live now.
+1. Bump `version` in `package.json` and commit to `main`.
+2. Tag the release: `git tag -a v1.3.0 -m "acro-docs-theme 1.3.0" && git push origin v1.3.0`.
+   This is what `@1` on jsDelivr follows.
+3. Fast-forward the `v1` **branch**, which the reusable workflow and
+   `npx -p github:acronym-lol/acro-docs-theme#v1` use:
+   `git push origin main:v1`.
+4. Purge jsDelivr (above) if it needs to be live now, then check the version it serves:
+   `curl -sI https://cdn.jsdelivr.net/gh/acronym-lol/acro-docs-theme@1/theme/acro-docsify.js | grep -i x-jsd-version`.
 
 Docsify, docsify-copy-code and Prism are pinned in `theme/acro-docsify.js` (`VERSIONS`).
 Upgrading them is a theme release, not a pull request per repo.
