@@ -11,9 +11,16 @@ on:
   workflow_call:
     inputs:
       docs-path:
-        description: The docs folder, relative to the repo root.
+        description: The docs folder, relative to the repo root. Ignored when docs-paths is set.
         type: string
         default: docs
+      docs-paths:
+        description: >-
+          Several docs folders, one per line, for a repo that hosts more than one site (such
+          as one per git subtree). All of them are regenerated and committed together, so the
+          runs cannot race each other's pushes.
+        type: string
+        default: ''
       theme-ref:
         description: >-
           The acro-docs-theme ref whose generator to run. Leave it: it matches the major
@@ -42,27 +49,37 @@ jobs:
         with:
           node-version: 20
 
-      - name: Generate
+      # One folder per line in docs-paths (blank lines ignored), else the single docs-path.
+      - name: Resolve folders
         env:
-          DOCS: ${{ inputs.docs-path }}
-        run: node .acro-docs-theme/bin/acro-docs-sidebar.mjs "$DOCS"
-
-      # Only the sidebar is ever committed. Pushes made with GITHUB_TOKEN do not start
-      # workflows, so this cannot trigger itself.
-      - name: Commit if it changed
-        env:
-          DOCS: ${{ inputs.docs-path }}
+          DOCS_PATH: ${{ inputs.docs-path }}
+          DOCS_PATHS: ${{ inputs.docs-paths }}
         run: |
-          file="$DOCS/_sidebar.md"
-          if git diff --quiet -- "$file" && [ -z "$(git ls-files --others --exclude-standard -- "$file")" ]; then
-            echo "$file is already up to date."
+          printf '%s\n' "$DOCS_PATHS" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' > "$RUNNER_TEMP/folders" || true
+          [ -s "$RUNNER_TEMP/folders" ] || printf '%s\n' "$DOCS_PATH" > "$RUNNER_TEMP/folders"
+          echo "Folders:"; cat "$RUNNER_TEMP/folders"
+
+      - name: Generate
+        run: |
+          mapfile -t folders < "$RUNNER_TEMP/folders"
+          node .acro-docs-theme/bin/acro-docs-sidebar.mjs "${folders[@]}"
+
+      # Only sidebars are ever committed, all in one commit. Pushes made with GITHUB_TOKEN
+      # do not start workflows, so this cannot trigger itself.
+      - name: Commit if any changed
+        run: |
+          mapfile -t folders < "$RUNNER_TEMP/folders"
+          files=()
+          for d in "${folders[@]}"; do files+=("$d/_sidebar.md"); done
+          if git diff --quiet -- "${files[@]}" && [ -z "$(git ls-files --others --exclude-standard -- "${files[@]}")" ]; then
+            echo "Sidebars are already up to date."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- "$file"
+          git add -- "${files[@]}"
           git commit -m "Regenerate docs sidebar"
           if ! git push; then
-            echo "::error::Could not push the regenerated $file (a protected branch?). Run \`npx -p github:acronym-lol/acro-docs-theme#v1 acro-docs-sidebar $DOCS\` locally and commit the result instead."
+            echo "::error::Could not push the regenerated sidebars (a protected branch?). Run \`npx -p github:acronym-lol/acro-docs-theme#v1 acro-docs-sidebar ${folders[*]}\` locally and commit the result instead."
             exit 1
           fi

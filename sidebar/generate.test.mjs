@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { buildSidebar, firstHeading, humanise, parseFrontmatter, walk } from './generate.mjs';
+import { buildSidebar, firstHeading, humanise, main, parseFrontmatter, walk } from './generate.mjs';
 
 const FIXTURE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'docs');
 
@@ -209,6 +209,50 @@ test('_sidebar.extra.md is appended after a divider, verbatim', () => {
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+// ---------------------------------------------------------------------------- cli
+
+/** Runs main() with console output silenced; returns its exit code. */
+function quietMain(argv) {
+  const saved = [console.log, console.warn, console.error];
+  console.log = console.warn = console.error = () => {};
+  try {
+    return main(argv);
+  } finally {
+    [console.log, console.warn, console.error] = saved;
+  }
+}
+
+test('several folders: each gets its own sidebar, and --check covers all of them', () => {
+  const a = tree({ 'one.md': '# One' });
+  const b = tree({ 'two.md': '# Two' });
+  try {
+    assert.equal(quietMain([a, b]), 0);
+    assert.match(readFileSync(path.join(a, '_sidebar.md'), 'utf8'), /\[One\]\(one\)/);
+    assert.match(readFileSync(path.join(b, '_sidebar.md'), 'utf8'), /\[Two\]\(two\)/);
+    assert.equal(quietMain([a, b, '--check']), 0);
+
+    writeFileSync(path.join(b, 'three.md'), '# Three');
+    assert.equal(quietMain([a, b, '--check']), 1, 'a stale second folder fails the check');
+  } finally {
+    rmSync(a, { recursive: true, force: true });
+    rmSync(b, { recursive: true, force: true });
+  }
+});
+
+test('a missing folder fails the run but does not stop the others', () => {
+  const a = tree({ 'one.md': '# One' });
+  try {
+    assert.equal(quietMain([path.join(a, 'nope'), a]), 2);
+    assert.match(readFileSync(path.join(a, '_sidebar.md'), 'utf8'), /\[One\]\(one\)/);
+  } finally {
+    rmSync(a, { recursive: true, force: true });
+  }
+});
+
+test('--stdout refuses several folders, since their output would run together', () => {
+  assert.equal(quietMain(['a', 'b', '--stdout']), 2);
 });
 
 test('the committed fixture sidebar is exactly what the generator produces', () => {

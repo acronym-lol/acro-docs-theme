@@ -60,6 +60,38 @@ that touch `docs/`, and commits the result as `github-actions[bot]`. It cannot p
 branch that blocks bot pushes; it then fails with a message saying to run the command
 above locally.
 
+### Several sites in one repo
+
+A repo that hosts more than one docs site (acro-td-core has its own plus one per module,
+each published from a git subtree) regenerates them all in one run. The command takes
+several folders:
+
+```sh
+npx -p github:acronym-lol/acro-docs-theme#v1 acro-docs-sidebar docs modules/acro-td-macros/docs
+```
+
+and the workflow takes `docs-paths`, one folder per line, instead of `docs-path`:
+
+```yaml
+jobs:
+  sidebar:
+    uses: acronym-lol/acro-docs-theme/.github/workflows/sidebar.yml@v1
+    with:
+      docs-paths: |
+        docs
+        modules/acro-td-macros/docs
+```
+
+Every changed sidebar goes into one commit. Calling the workflow once per folder instead
+would not work: each run pushes on its own, and all but the first are rejected. Also widen
+the workflow's `paths:` trigger to cover every folder.
+
+> [!WARNING]
+> If a folder is published as a **git subtree** into its own repo, do not add the workflow
+> to that repo. Its bot commit would exist only there, and the next `git subtree push` from
+> the parent would be rejected. Generate in the parent repo only; the subtree push carries
+> the sidebar out.
+
 ## Writing for it
 
 Plain CommonMark, the same as for acro-docs. A few extras:

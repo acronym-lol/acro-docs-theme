@@ -19,9 +19,7 @@ jobs:
       # The committed fixture sidebars must be exactly what the generator writes, so a
       # rule change shows up as a reviewable diff in the fixtures.
       - name: Fixture sidebars are current
-        run: |
-          node bin/acro-docs-sidebar.mjs fixtures/docs --check
-          node bin/acro-docs-sidebar.mjs fixtures/site --check
+        run: node bin/acro-docs-sidebar.mjs fixtures/docs fixtures/site --check
 
       - name: Theme script parses
         run: node --check theme/acro-docsify.js

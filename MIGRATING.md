@@ -83,6 +83,12 @@ Read the old `docs/_sidebar.md` before it is replaced.
 Copy [`templates/acro-docs-sidebar.yml`](templates/acro-docs-sidebar.yml) to
 `.github/workflows/acro-docs-sidebar.yml`, unchanged.
 
+**If the repo hosts more than one site** (for example one per git subtree, as acro-td-core
+does), list every folder in `docs-paths` and widen `paths:` to match; see "Several sites in
+one repo" in the README. **If the repo is itself a subtree published from another repo, add
+no workflow to it**: generate in the parent instead, or the parent's next subtree push is
+rejected. Steps 1, 2 and 4 still apply to each folder.
+
 ## 4. Generate the sidebar once
 
 From the repo root:
