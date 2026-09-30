@@ -1,6 +1,6 @@
 {
   "name": "acro-docs-theme",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Shared Docsify theme and generated sidebar for Acronym repos' GitHub Pages documentation.",
   "license": "MIT",
   "type": "module",
