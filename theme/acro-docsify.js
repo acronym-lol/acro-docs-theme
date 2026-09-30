@@ -106,9 +106,8 @@
     calloutPlugin,
     sidebarPlugin,
     togglePlugin,
-  ].concat(
-    repo.plugins || [],
-  );
+    tocPlugin,
+  ].concat(repo.plugins || []);
   window.$docsify = config;
 
   function merge(a, b) {
@@ -380,16 +379,28 @@
     li.insertBefore(row, sub);
   }
 
-  /** A light/dark switch at the foot of the rail. The choice is remembered per browser. */
+  /**
+   * A light/dark switch in the rail's top row, beside the site name, where acro-docs
+   * keeps its own. An icon rather than a word, so the row stays one line at rail width.
+   * The choice is remembered per browser.
+   */
+  var SUN =
+    '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></g></svg>';
+  var MOON =
+    '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>';
+
   function togglePlugin(hook) {
     hook.doneEach(function () {
       var sidebar = document.querySelector('.sidebar');
       if (!sidebar || sidebar.querySelector('.acro-theme-toggle')) return;
-      var wrap = el('div', 'acro-theme-toggle');
-      var button = el('button', '');
+      var button = el('button', 'acro-theme-toggle');
       button.type = 'button';
       var label = function () {
-        button.textContent = currentMode() === 'dark' ? 'Light mode' : 'Dark mode';
+        var toDark = currentMode() !== 'dark';
+        // Show what a click switches TO, as acro-docs' toggle does.
+        button.innerHTML = toDark ? MOON : SUN;
+        button.setAttribute('aria-label', toDark ? 'Switch to dark mode' : 'Switch to light mode');
+        button.title = button.getAttribute('aria-label');
       };
       label();
       button.addEventListener('click', function () {
@@ -402,8 +413,89 @@
         }
         label();
       });
-      wrap.appendChild(button);
-      sidebar.appendChild(wrap);
+      sidebar.appendChild(button);
+    });
+  }
+
+  /**
+   * "On this page", on the right, as on acro-docs: the page's h2 and h3 headings, with the
+   * one being read highlighted as the reader scrolls. Shown only where there is room
+   * (see .acro-toc in the CSS) and only for pages with at least two headings, where a
+   * contents list says something the page itself does not.
+   *
+   * Links reuse Docsify's own heading anchors (`#/page?id=heading`), so a click scrolls
+   * exactly as clicking the heading's own link would.
+   */
+  var tocState = { headings: [], links: [], ticking: false };
+
+  function tocPlugin(hook) {
+    hook.doneEach(function () {
+      var old = document.querySelector('.acro-toc');
+      if (old) old.remove();
+      document.body.classList.remove('acro-has-toc');
+
+      var section = document.querySelector('.markdown-section');
+      if (!section) return;
+      var headings = Array.prototype.filter.call(
+        section.querySelectorAll('h2[id], h3[id]'),
+        function (h) {
+          return !h.closest('.acro-callout');
+        },
+      );
+      tocState.headings = headings;
+      tocState.links = [];
+      if (headings.length < 2) return;
+
+      var nav = el('nav', 'acro-toc');
+      nav.setAttribute('aria-label', 'On this page');
+      nav.appendChild(el('p', 'acro-toc-title', 'On this page'));
+      var list = el('ul', '');
+      headings.forEach(function (h) {
+        var anchor = h.querySelector('a.anchor');
+        var item = el('li', 'acro-toc-' + h.tagName.toLowerCase());
+        var link = el('a', '', h.textContent.trim());
+        link.href = anchor ? anchor.getAttribute('href') : '#' + h.id;
+        item.appendChild(link);
+        list.appendChild(item);
+        tocState.links.push(link);
+      });
+      nav.appendChild(list);
+      document.body.appendChild(nav);
+      document.body.classList.add('acro-has-toc');
+      markActive();
+    });
+
+    window.addEventListener(
+      'scroll',
+      function () {
+        if (tocState.ticking) return;
+        tocState.ticking = true;
+        window.requestAnimationFrame(function () {
+          tocState.ticking = false;
+          markActive();
+        });
+      },
+      { passive: true },
+    );
+  }
+
+  /**
+   * The current heading is the last one whose top has passed a line a little below the top
+   * of the window. At the very bottom of the page the last heading wins, even if it is too
+   * short to reach that line, so the final section can always be highlighted.
+   */
+  function markActive() {
+    var headings = tocState.headings;
+    if (!tocState.links.length) return;
+    var line = 96;
+    var current = 0;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].getBoundingClientRect().top <= line) current = i;
+    }
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom) current = headings.length - 1;
+    tocState.links.forEach(function (link, i) {
+      link.classList.toggle('acro-toc-active', i === current);
     });
   }
 

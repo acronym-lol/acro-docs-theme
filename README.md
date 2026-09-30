@@ -114,8 +114,12 @@ Plain CommonMark, the same as for acro-docs. A few extras:
   link to the source. It deliberately leaves out status, tier and owner: these sites are
   public, and those fields are internal.
 
-Light and dark follow the reader's OS, with a toggle at the foot of the rail that is
-remembered per browser.
+Light and dark follow the reader's OS, with a toggle in the rail's top row (beside the
+site name and the collapse button) that is remembered per browser.
+
+**On this page:** on screens at least 1200px wide, pages with two or more `##`/`###`
+headings get a contents column on the right, as on acro-docs, with the section being read
+highlighted as the reader scrolls.
 
 ## Versions and releases
 
