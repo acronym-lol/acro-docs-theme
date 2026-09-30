@@ -1,0 +1,24 @@
+{
+  "name": "acro-docs-theme",
+  "version": "1.0.0",
+  "description": "Shared Docsify theme and generated sidebar for Acronym repos' GitHub Pages documentation.",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "acro-docs-sidebar": "bin/acro-docs-sidebar.mjs"
+  },
+  "files": [
+    "bin",
+    "sidebar/generate.mjs",
+    "theme"
+  ],
+  "scripts": {
+    "test": "node --test sidebar/generate.test.mjs",
+    "sidebar:fixtures": "node bin/acro-docs-sidebar.mjs fixtures/docs",
+    "check": "node --test sidebar/generate.test.mjs && node bin/acro-docs-sidebar.mjs fixtures/docs --check"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

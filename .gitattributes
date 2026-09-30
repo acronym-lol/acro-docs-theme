@@ -1,0 +1,5 @@
+# LF everywhere, so a sidebar generated on Linux CI and one generated on Windows are the
+# same bytes, and --check never reports line endings as drift.
+* text=auto eol=lf
+*.woff2 binary
+*.png binary

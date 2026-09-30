@@ -1,0 +1,68 @@
+# Reusable workflow: regenerates a repo's docs/_sidebar.md from its docs/ folder and
+# commits it. Repos call it with the 10-line file in templates/acro-docs-sidebar.yml:
+#
+#   uses: acronym-lol/acro-docs-theme/.github/workflows/sidebar.yml@v1
+#
+# Pinning @v1 means generator fixes in any 1.x release reach every repo without a pull
+# request. The generator itself is sidebar/generate.mjs; its rules match acro-docs.
+name: Regenerate docs sidebar
+
+on:
+  workflow_call:
+    inputs:
+      docs-path:
+        description: The docs folder, relative to the repo root.
+        type: string
+        default: docs
+      theme-ref:
+        description: >-
+          The acro-docs-theme ref whose generator to run. Leave it: it matches the major
+          version this file belongs to.
+        type: string
+        default: v1
+
+permissions:
+  contents: write
+
+jobs:
+  sidebar:
+    name: Regenerate _sidebar.md
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out the generator
+        uses: actions/checkout@v4
+        with:
+          repository: acronym-lol/acro-docs-theme
+          ref: ${{ inputs.theme-ref }}
+          path: .acro-docs-theme
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate
+        env:
+          DOCS: ${{ inputs.docs-path }}
+        run: node .acro-docs-theme/bin/acro-docs-sidebar.mjs "$DOCS"
+
+      # Only the sidebar is ever committed. Pushes made with GITHUB_TOKEN do not start
+      # workflows, so this cannot trigger itself.
+      - name: Commit if it changed
+        env:
+          DOCS: ${{ inputs.docs-path }}
+        run: |
+          file="$DOCS/_sidebar.md"
+          if git diff --quiet -- "$file" && [ -z "$(git ls-files --others --exclude-standard -- "$file")" ]; then
+            echo "$file is already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "$file"
+          git commit -m "Regenerate docs sidebar"
+          if ! git push; then
+            echo "::error::Could not push the regenerated $file (a protected branch?). Run \`npx -p github:acronym-lol/acro-docs-theme#v1 acro-docs-sidebar $DOCS\` locally and commit the result instead."
+            exit 1
+          fi

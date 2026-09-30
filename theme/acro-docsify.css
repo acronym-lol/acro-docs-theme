@@ -1,0 +1,922 @@
+/*
+ * acro-docs-theme: the Acronym look for Docsify-based GitHub Pages documentation.
+ *
+ * Load this INSTEAD of Docsify's own themes (vue.css, dark.css), not on top of them: it
+ * carries the layout as well as the look, so there is no base theme to fight. Colours come
+ * from tokens.css, generated from acro-docs, so this file names roles (--acro-bg,
+ * --acro-primary) rather than hex values. The one place to change a colour is acro-docs.
+ *
+ * Mirrors the acro-docs site: DM Sans prose capped at a readable measure, Roboto Mono for
+ * code and labels, Roboto Condensed caps headings with the brand square, the softened
+ * dark page, and a sidebar that reads like the acro-docs rail.
+ */
+
+@import url('./tokens.css');
+@import url('./fonts.css');
+
+:root {
+  --acro-sidebar-w: 17.5rem;
+  --acro-radius: 2px;
+  /* Scrollbars and form controls follow the same mode as the page. */
+  color-scheme: light dark;
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ base and layout */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 15px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--acro-bg);
+  color: var(--acro-text);
+  font-family: var(--a-font-body);
+  line-height: 1.3;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a {
+  color: var(--acro-primary);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--acro-primary-hover);
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--acro-primary);
+  outline-offset: 2px;
+  border-radius: var(--acro-radius);
+}
+
+/* Docsify's loading bar. */
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  height: 2px;
+  background: var(--acro-primary);
+  transition:
+    width 0.2s,
+    opacity 0.4s;
+}
+
+/*
+ * The rail and the page. Docsify toggles `body.close`: on a wide screen that HIDES the
+ * sidebar, on a narrow one it SHOWS it. Both halves are below.
+ */
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  width: var(--acro-sidebar-w);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--acro-bg);
+  border-right: 1px solid var(--acro-rule);
+  transition: transform 0.25s ease-out;
+}
+
+.content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--acro-sidebar-w);
+  padding-top: 1rem;
+  transition: left 0.25s ease-out;
+}
+
+body.close .sidebar {
+  transform: translateX(calc(-1 * var(--acro-sidebar-w)));
+}
+body.close .content {
+  left: 0;
+}
+
+.sidebar-toggle {
+  position: fixed;
+  top: 0.625rem;
+  left: 0.625rem;
+  z-index: 30;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--acro-rule);
+  border-radius: var(--acro-radius);
+  background: var(--acro-surface);
+  cursor: pointer;
+}
+.sidebar-toggle .sidebar-toggle-button {
+  display: grid;
+  gap: 3px;
+}
+.sidebar-toggle span {
+  display: block;
+  width: 14px;
+  height: 2px;
+  background: var(--acro-e700);
+}
+/* On a wide screen the toggle sits over the rail's top corner, above the site name. */
+@media (min-width: 769px) {
+  .sidebar-toggle {
+    top: auto;
+    bottom: 0.75rem;
+    left: 0.75rem;
+  }
+  body.close .sidebar-toggle {
+    background: var(--acro-surface);
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(calc(-1 * var(--acro-sidebar-w)));
+    box-shadow: none;
+  }
+  .content {
+    left: 0;
+    padding-top: 3.25rem;
+  }
+  body.close .sidebar {
+    transform: none;
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.35);
+  }
+  body.close .content {
+    left: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------- sidebar */
+
+/* The site name: the rail's heading and the link home, like the repo name on acro-docs. */
+.sidebar .app-name {
+  order: -2;
+  margin: 0;
+  padding: 1.25rem 1.25rem 0.75rem;
+  font-family: var(--a-font-display);
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+.sidebar .app-name-link {
+  color: var(--acro-heading);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.sidebar .app-name-link::before {
+  content: '';
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  background: var(--acro-primary);
+}
+.sidebar .app-name-link:hover {
+  text-decoration: none;
+  color: var(--acro-primary);
+}
+.sidebar .app-name-link img {
+  max-height: 1.6rem;
+}
+
+/* Search sits under the name, sticky, so the list scrolls beneath it. */
+.sidebar .search {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  /* Docsify's search plugin inserts this as the rail's first child, above the name. */
+  order: -1;
+  margin: 0;
+  padding: 0.75rem 1rem 0.5rem;
+  background: var(--acro-bg);
+  border-bottom: 1px solid var(--acro-rule);
+}
+.sidebar .search .input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--acro-e300);
+  border-radius: var(--acro-radius);
+  background: var(--acro-surface);
+}
+.sidebar .search input {
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--acro-text);
+  font: 0.8125rem var(--a-font-subhead);
+}
+.sidebar .search input::placeholder {
+  color: var(--acro-e600);
+}
+.sidebar .search .clear-button {
+  width: 1.75rem;
+  cursor: pointer;
+  display: none;
+}
+.sidebar .search .clear-button.show {
+  display: block;
+}
+.sidebar .search .clear-button svg circle {
+  fill: var(--acro-e400);
+}
+.sidebar .search .results-panel {
+  display: none;
+}
+.sidebar .search .results-panel.show {
+  display: block;
+}
+.sidebar .search .matching-post {
+  padding: 0.625rem 0.25rem;
+  border-bottom: 1px solid var(--acro-rule);
+}
+.sidebar .search .matching-post:last-child {
+  border-bottom: 0;
+}
+.sidebar .search .matching-post h2 {
+  margin: 0 0 0.25rem;
+  font: 600 0.8125rem var(--a-font-subhead);
+  text-transform: none;
+}
+.sidebar .search .matching-post p {
+  margin: 0;
+  font: 0.75rem/1.4 var(--a-font-subhead);
+  color: var(--acro-e700);
+}
+.sidebar .search .search-keyword {
+  color: var(--acro-primary);
+  font-style: normal;
+  font-weight: 700;
+}
+.sidebar .search .empty {
+  padding: 0.5rem 0.25rem;
+  font: 0.8125rem var(--a-font-subhead);
+  color: var(--acro-e600);
+}
+
+/*
+ * The page list. Folders read like acro-docs groups (caps subhead, a page count, a caret);
+ * pages like acro-docs pages (the body face, the quietest thing in the rail); the current
+ * page gets the primary colour and a 2px left rule. Structure and state classes are added
+ * by the sidebar plugin in acro-docsify.js.
+ */
+.sidebar-nav {
+  flex: 1;
+  padding: 0.5rem 0.75rem 4rem;
+  font-family: var(--a-font-subhead);
+}
+.sidebar-nav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sidebar-nav ul ul {
+  padding-left: 0.625rem;
+  margin-left: 0.5rem;
+  border-left: 1px solid var(--acro-rule);
+}
+.sidebar-nav li {
+  margin: 0;
+}
+.sidebar-nav li > p {
+  margin: 0;
+}
+.sidebar-nav a,
+.sidebar-nav .acro-folder-label {
+  display: block;
+  padding: 0.35rem 0.625rem;
+  border-radius: var(--acro-radius);
+  color: var(--acro-e800);
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+.sidebar-nav a:hover {
+  background: var(--acro-e100);
+  color: var(--acro-heading);
+  text-decoration: none;
+}
+.sidebar-nav li.active > a,
+.sidebar-nav li.active > p > a,
+.sidebar-nav li.active > .acro-folder-row > a {
+  color: var(--acro-primary);
+  font-weight: 700;
+  background: var(--acro-e100);
+  box-shadow: inset 2px 0 0 0 var(--acro-primary);
+}
+
+/* A folder row: its own link or label, then a caret and a count. */
+.sidebar-nav li.acro-folder > .acro-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.sidebar-nav li.acro-folder > .acro-folder-row > a,
+.sidebar-nav li.acro-folder > .acro-folder-row > .acro-folder-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--acro-e700);
+}
+.sidebar-nav .acro-folder-label strong {
+  font-weight: inherit;
+}
+.sidebar-nav .acro-count {
+  flex: none;
+  min-width: 1.15rem;
+  padding: 0 0.3rem;
+  border-radius: var(--acro-radius);
+  background: var(--acro-e200);
+  color: var(--acro-e600);
+  font: 0.625rem/1.15rem var(--a-font-body);
+  text-align: center;
+}
+.sidebar-nav .acro-caret {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--acro-radius);
+  background: transparent;
+  color: var(--acro-e600);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.sidebar-nav .acro-caret::before {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translate(-1px, -1px);
+  transition: transform 0.15s;
+}
+.sidebar-nav li.acro-collapsed > .acro-folder-row .acro-caret::before {
+  transform: rotate(-45deg);
+}
+.sidebar-nav .acro-caret:hover {
+  background: var(--acro-e100);
+  color: var(--acro-heading);
+}
+.sidebar-nav li.acro-collapsed > ul {
+  display: none;
+}
+
+/* Headings Docsify adds under the current page (subMaxLevel), should a repo turn them on. */
+.sidebar-nav ul.app-sub-sidebar a {
+  font-size: 0.75rem;
+  color: var(--acro-e600);
+}
+
+/* The divider before _sidebar.extra.md links: the brand's row of squares. */
+.sidebar-nav hr {
+  width: 2.6rem;
+  height: 0.3rem;
+  margin: 1rem 0.625rem;
+  border: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--acro-e500) 0 0.3rem,
+    transparent 0.3rem 0.8rem
+  );
+}
+
+/* Theme toggle, at the foot of the rail. */
+.acro-theme-toggle {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding: 0.625rem 1rem 0.75rem 3.5rem;
+  border-top: 1px solid var(--acro-rule);
+  background: var(--acro-bg);
+  text-align: right;
+}
+.acro-theme-toggle button {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--acro-e300);
+  border-radius: var(--acro-radius);
+  background: transparent;
+  color: var(--acro-e700);
+  font: 600 0.6875rem var(--a-font-subhead);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.acro-theme-toggle button:hover {
+  color: var(--acro-heading);
+  border-color: var(--acro-e500);
+}
+
+/* ---------------------------------------------------------------------- the page */
+
+.markdown-section {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.5rem 2.5rem 5rem;
+}
+@media (max-width: 768px) {
+  .markdown-section {
+    padding: 1rem 1.25rem 4rem;
+  }
+}
+
+/* Running text in DM Sans at a readable measure; code and tables keep the full column. */
+.markdown-section p,
+.markdown-section li,
+.markdown-section blockquote,
+.markdown-section td,
+.markdown-section th {
+  font-family: var(--a-font-subhead);
+  font-size: 1.0667rem;
+  line-height: 1.65;
+  letter-spacing: -0.005em;
+}
+.markdown-section > p,
+.markdown-section > ul,
+.markdown-section > ol,
+.markdown-section > blockquote {
+  max-width: 72ch;
+}
+.markdown-section ul,
+.markdown-section ol {
+  padding-left: 1.5rem;
+}
+.markdown-section strong {
+  color: var(--acro-heading);
+}
+
+.markdown-section h1,
+.markdown-section h2,
+.markdown-section h3,
+.markdown-section h4,
+.markdown-section h5,
+.markdown-section h6 {
+  color: var(--acro-heading);
+}
+.markdown-section h1 a,
+.markdown-section h2 a,
+.markdown-section h3 a,
+.markdown-section h4 a,
+.markdown-section h5 a,
+.markdown-section h6 a {
+  color: inherit;
+}
+.markdown-section h1 a:hover,
+.markdown-section h2 a:hover,
+.markdown-section h3 a:hover {
+  text-decoration: none;
+}
+
+/* h1/h2: the display face in caps, as on acro-docs. Deeper headings are subheads. */
+.markdown-section h1 {
+  margin: 0.5rem 0 1.25rem;
+  font: 700 2.2rem/0.95 var(--a-font-display);
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+}
+.markdown-section h2 {
+  margin: 2.75rem 0 1rem;
+  font: 700 1.55rem/1 var(--a-font-display);
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+}
+.markdown-section h2::before {
+  content: '';
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: 0.45em;
+  vertical-align: 0.06em;
+  background: var(--acro-primary);
+}
+.markdown-section h3,
+.markdown-section h4,
+.markdown-section h5,
+.markdown-section h6 {
+  font-family: var(--a-font-subhead);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.markdown-section h3 {
+  margin: 2rem 0 0.625rem;
+  font-size: 1.3rem;
+}
+.markdown-section h4 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* Inline code reads as data. */
+.markdown-section code {
+  padding: 0.1em 0.35em;
+  border: 1px solid var(--acro-e200);
+  border-radius: var(--acro-radius);
+  background: var(--acro-code-inline-bg);
+  color: var(--acro-text);
+  font-family: var(--a-font-body);
+  font-size: 0.875em;
+}
+
+/* Code blocks: the brand syntax colours, on the code background from acro-docs. */
+.markdown-section pre {
+  position: relative;
+  margin: 1.25rem 0;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--acro-e200);
+  border-radius: var(--acro-radius);
+  background: var(--acro-code-bg);
+}
+.markdown-section pre > code {
+  display: block;
+  padding: 1rem 1.125rem;
+  border: 0;
+  background: none;
+  color: var(--acro-code-text);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  white-space: pre;
+}
+/* Box-drawing diagrams stay aligned. */
+.markdown-section pre > code.lang-text {
+  line-height: 1.35;
+}
+/* The language tag Docsify puts on a block, as a small label. */
+.markdown-section pre[data-lang]::after {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0.35rem;
+  right: 0.6rem;
+  font: 0.625rem var(--a-font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--acro-e500);
+}
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: var(--acro-syntax-comment);
+  font-style: italic;
+}
+.token.punctuation,
+.token.operator {
+  color: var(--acro-syntax-punctuation);
+}
+.token.keyword,
+.token.tag,
+.token.selector,
+.token.important,
+.token.atrule,
+.token.rule {
+  color: var(--acro-syntax-keyword);
+}
+.token.string,
+.token.char,
+.token.attr-value,
+.token.regex,
+.token.inserted,
+.token.url {
+  color: var(--acro-syntax-string);
+}
+.token.number,
+.token.boolean,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: var(--acro-syntax-number);
+}
+.token.function,
+.token.class-name,
+.token.builtin {
+  color: var(--acro-syntax-function);
+}
+.token.property,
+.token.attr-name,
+.token.variable,
+.token.parameter,
+.token.namespace {
+  color: var(--acro-syntax-property);
+}
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+
+/* docsify-copy-code's button. */
+.docsify-copy-code-button {
+  position: absolute;
+  top: 0.35rem;
+  right: 3.5rem;
+  z-index: 1;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--acro-e300);
+  border-radius: var(--acro-radius);
+  background: var(--acro-surface);
+  color: var(--acro-e700);
+  font: 600 0.625rem var(--a-font-subhead);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.markdown-section pre:hover .docsify-copy-code-button,
+.docsify-copy-code-button:focus-visible {
+  opacity: 1;
+}
+.docsify-copy-code-button .label {
+  display: inline;
+}
+.docsify-copy-code-button .success,
+.docsify-copy-code-button .error {
+  display: none;
+}
+.docsify-copy-code-button.success .label,
+.docsify-copy-code-button.error .label {
+  display: none;
+}
+.docsify-copy-code-button.success .success,
+.docsify-copy-code-button.error .error {
+  display: inline;
+}
+
+/* Tables: a label header row, horizontal rules only, tabular figures. */
+.markdown-section table {
+  display: block;
+  width: 100%;
+  overflow: auto;
+  margin: 1.25rem 0;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.markdown-section thead tr {
+  background: var(--acro-surface);
+  border-bottom: 2px solid var(--acro-e300);
+}
+.markdown-section th {
+  padding: 0.5rem 0.875rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--acro-e700);
+}
+.markdown-section td {
+  padding: 0.5rem 0.875rem;
+  border-bottom: 1px solid var(--acro-table-border);
+  vertical-align: top;
+}
+.markdown-section tbody tr:nth-child(2n) {
+  background: var(--acro-table-stripe);
+}
+.markdown-section td:first-child code {
+  white-space: nowrap;
+}
+
+/* A divider is a row of four squares, the brand's section marker. */
+.markdown-section hr {
+  width: 3.9rem;
+  height: 0.45rem;
+  margin: 2.75rem 0;
+  border: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--acro-e500) 0 0.45rem,
+    transparent 0.45rem 1.15rem
+  );
+}
+
+/* Quotes: a set-aside block with a primary bar. */
+.markdown-section blockquote {
+  margin: 1.25rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--acro-primary);
+  border-radius: 0 var(--acro-radius) var(--acro-radius) 0;
+  background: var(--acro-surface);
+}
+.markdown-section blockquote > :first-child {
+  margin-top: 0;
+}
+.markdown-section blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-section img {
+  max-width: 100%;
+}
+
+/*
+ * Callouts: `> [!NOTE]` and friends, GitHub's syntax, turned into these by the callout
+ * plugin. The same treatment as acro-docs admonitions: surface fill, a 3px accent edge,
+ * a caps label with the brand square.
+ */
+.markdown-section .acro-callout {
+  --acro-accent: var(--acro-e600);
+  margin: 1.25rem 0;
+  padding: 0.875rem 1.125rem;
+  max-width: 72ch;
+  border: 1px solid var(--acro-e200);
+  border-left: 3px solid var(--acro-accent);
+  border-radius: var(--acro-radius);
+  background: var(--acro-surface);
+}
+.markdown-section .acro-callout--info,
+.markdown-section .acro-callout--important {
+  --acro-accent: var(--acro-primary);
+}
+.markdown-section .acro-callout--tip {
+  --acro-accent: var(--acro-success);
+}
+.markdown-section .acro-callout--warning,
+.markdown-section .acro-callout--danger,
+.markdown-section .acro-callout--caution {
+  --acro-accent: var(--acro-warning);
+}
+.markdown-section .acro-callout--danger,
+.markdown-section .acro-callout--caution {
+  border-left-width: 5px;
+}
+.markdown-section .acro-callout-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.35rem;
+  font: 700 0.72rem var(--a-font-subhead);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--acro-accent);
+}
+.markdown-section .acro-callout-title::before {
+  content: '';
+  width: 0.6em;
+  height: 0.6em;
+  background: var(--acro-accent);
+}
+.markdown-section .acro-callout > p:last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * The header above each page, from docs/_meta.yml: name, summary, source link. Public
+ * facts only; status, tier and owner stay on the internal acro-docs site.
+ */
+.acro-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid var(--acro-e200);
+}
+.acro-header-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: 600 0.72rem var(--a-font-subhead);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--acro-e700);
+}
+.acro-header-name::before {
+  content: '';
+  width: 0.45em;
+  height: 0.45em;
+  background: var(--acro-e500);
+}
+.acro-header-summary {
+  flex-basis: 100%;
+  order: 3;
+  margin: 0;
+  font: 0.9rem/1.45 var(--a-font-subhead);
+  color: var(--acro-e800);
+  max-width: 72ch;
+}
+.acro-header-source {
+  margin-left: auto;
+  font: 600 0.75rem var(--a-font-subhead);
+}
+
+/* A cover page (coverpage: true), kept plain and on-brand. */
+section.cover {
+  display: none;
+  position: relative;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  background: var(--acro-bg);
+  text-align: center;
+}
+section.cover.show {
+  display: flex;
+}
+section.cover .cover-main {
+  max-width: 40rem;
+  padding: 2rem;
+}
+section.cover h1 {
+  font: 700 3rem/0.95 var(--a-font-display);
+  text-transform: uppercase;
+  color: var(--acro-heading);
+}
+section.cover blockquote p,
+section.cover p {
+  font-family: var(--a-font-subhead);
+  color: var(--acro-e700);
+}
+section.cover ul {
+  list-style: none;
+  padding: 0;
+}
+section.cover p:last-child a {
+  display: inline-block;
+  margin: 0.25rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--acro-primary);
+  border-radius: var(--acro-radius);
+  font: 600 0.8125rem var(--a-font-subhead);
+}
+section.cover p:last-child a:last-child {
+  background: var(--acro-primary);
+  color: var(--acro-bg);
+}
+
+/*
+ * Docsify's corner GitHub badge, drawn when `repo` is set. The page header already links
+ * to the source, so the badge would say the same thing twice.
+ */
+.github-corner {
+  display: none;
+}
+
+/* Docsify's own top navigation (loadNavbar), if a repo uses one. */
+.app-nav {
+  position: absolute;
+  top: 0.75rem;
+  right: 1.5rem;
+  z-index: 10;
+  margin: 0;
+  font: 0.8125rem var(--a-font-subhead);
+}
+.app-nav ul {
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .content,
+  .sidebar-nav .acro-caret::before {
+    transition: none;
+  }
+}
+
+@media print {
+  .sidebar,
+  .sidebar-toggle,
+  .docsify-copy-code-button {
+    display: none;
+  }
+  .content {
+    position: static;
+    left: 0;
+  }
+}
