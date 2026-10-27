@@ -241,6 +241,22 @@ test('several folders: each gets its own sidebar, and --check covers all of them
   }
 });
 
+test('a CRLF checkout (git core.autocrlf on Windows) still passes --check', () => {
+  const root = tree({
+    'a.md': '# A',
+    '_sidebar.extra.md': '- **Elsewhere**\r\n  - [One](https://example.com/1)\r\n',
+  });
+  try {
+    assert.doesNotMatch(buildSidebar(root, 'test'), /\r/, 'CRLF in the extra file is not carried into the sidebar');
+    assert.equal(quietMain([root]), 0);
+    const target = path.join(root, '_sidebar.md');
+    writeFileSync(target, readFileSync(target, 'utf8').replace(/\n/g, '\r\n'));
+    assert.equal(quietMain([root, '--check']), 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('a missing folder fails the run but does not stop the others', () => {
   const a = tree({ 'one.md': '# One' });
   try {

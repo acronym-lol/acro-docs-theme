@@ -284,7 +284,7 @@ export function buildSidebar(docsDir, version = 'dev') {
 
   const extraFile = path.join(docsDir, EXTRA_FILE);
   if (existsSync(extraFile)) {
-    const extra = readFileSync(extraFile, 'utf8').replace(/^﻿/, '').trim();
+    const extra = readFileSync(extraFile, 'utf8').replace(/^﻿/, '').replace(/\r\n/g, '\n').trim();
     if (extra) parts.push('', '---', '', extra);
   }
   return `${parts.join('\n')}\n`;
