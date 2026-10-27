@@ -21,6 +21,15 @@ jobs:
       - name: Fixture sidebars are current
         run: node bin/acro-docs-sidebar.mjs fixtures/docs fixtures/site --check
 
+      # npx installs only the files listed in package.json "files", so run the generator
+      # from the packed package too. A module left off that list only fails here.
+      - name: Packed generator runs
+        run: |
+          tgz=$(npm pack --silent --pack-destination "$RUNNER_TEMP")
+          mkdir -p "$RUNNER_TEMP/pkg"
+          tar -xzf "$RUNNER_TEMP/$tgz" -C "$RUNNER_TEMP/pkg"
+          node "$RUNNER_TEMP/pkg/package/bin/acro-docs-sidebar.mjs" fixtures/docs fixtures/site --check
+
       - name: Theme script parses
         run: node --check theme/acro-docsify.js
 
